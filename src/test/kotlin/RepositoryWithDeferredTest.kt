@@ -1,6 +1,7 @@
 @file:OptIn(ExperimentalCoroutinesApi::class)
 @file:Suppress("OPT_IN_IS_NOT_ENABLED")
 
+import arrow.core.Either
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -37,13 +38,13 @@ class RepositoryWithDeferredTest {
     }
 
     @Test
-    fun `methodThatWaitsForThrowingDeferredWithRunCatching should NOT fail when uncaught exception with default and deferred`() {
+    fun `methodThatWaitsForThrowingDeferredWithEitherCatch should NOT fail when uncaught exception with default and deferred`() {
         assertThrows<IllegalStateException>("throwingDeferred") {
             runTest(testDispatcher) testScope@{
                 val repo = Repository(this@testScope)
 
                 // even though we wrap the exception in `runCatching` it still throws at the end!
-                repo.methodThatWaitsForThrowingDeferredWithRunCatching()
+                repo.methodThatWaitsForThrowingDeferredWithEitherCatch()
             }
         }
     }
@@ -76,12 +77,12 @@ class RepositoryWithDeferredTest {
     }
 
     @Test
-    fun `methodThatWaitsForThrowingDeferredWithRunCatching should NOT fail when supervisorScope used`() {
+    fun `methodThatWaitsForThrowingDeferredWithEitherCatch should NOT fail when supervisorScope used`() {
         runTest(UnconfinedTestDispatcher()) {
             supervisorScope supervisorScope@{
                 val repo = Repository(this@supervisorScope)
 
-                repo.methodThatWaitsForThrowingDeferredWithRunCatching()
+                repo.methodThatWaitsForThrowingDeferredWithEitherCatch()
             }
         }
 
@@ -115,9 +116,9 @@ class RepositoryWithDeferredTest {
 
         }
 
-        fun methodThatWaitsForThrowingDeferredWithRunCatching() {
+        fun methodThatWaitsForThrowingDeferredWithEitherCatch() {
             coroutineScope.launch {
-                kotlin.runCatching {
+                Either.catch {
                     throwingDeferred.await()
                 }
             }

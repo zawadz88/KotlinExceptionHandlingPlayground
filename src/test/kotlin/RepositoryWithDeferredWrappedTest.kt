@@ -1,11 +1,11 @@
 @file:OptIn(ExperimentalCoroutinesApi::class)
 @file:Suppress("OPT_IN_IS_NOT_ENABLED")
 
+import arrow.core.Either
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 
 class RepositoryWithDeferredWrappedTest {
 
@@ -22,9 +22,9 @@ class RepositoryWithDeferredWrappedTest {
 
     class Repository(private val coroutineScope: CoroutineScope) {
 
-        private val throwingDeferred: Deferred<Result<String>> by lazy {
+        private val throwingDeferred: Deferred<Either<Throwable, String>> by lazy {
             coroutineScope.async {
-                kotlin.runCatching {
+                Either.catch {
                     throw IllegalStateException("throwingDeferred")
                 }
             }
@@ -33,8 +33,8 @@ class RepositoryWithDeferredWrappedTest {
         fun methodThatWaitsForThrowingDeferred() {
             coroutineScope.launch {
                 throwingDeferred.await()
-                    .onFailure { println("methodThatWaitsForThrowingDeferred onFailure") }
-                    .onSuccess { println("methodThatWaitsForThrowingDeferred onFailure") }
+                    .tapLeft { println("methodThatWaitsForThrowingDeferred tapLeft") }
+                    .tap { println("methodThatWaitsForThrowingDeferred tap") }
             }
         }
     }

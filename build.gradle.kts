@@ -16,6 +16,7 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.3")
+    implementation("io.arrow-kt:arrow-core:1.1.2")
 }
 
 tasks.test {
