@@ -4,6 +4,7 @@
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -35,14 +36,15 @@ class RepositoryWithDeferredTest {
         }
     }
 
-    // This actually fails!
     @Test
     fun `methodThatWaitsForThrowingDeferredWithRunCatching should NOT fail when uncaught exception with default and deferred`() {
-        runTest(testDispatcher) testScope@{
-            val repo = Repository(this@testScope)
+        assertThrows<IllegalStateException>("throwingDeferred") {
+            runTest(testDispatcher) testScope@{
+                val repo = Repository(this@testScope)
 
-            // even though we wrap the exception in `runCatching` it still throws at the end.
-            repo.methodThatWaitsForThrowingDeferredWithRunCatching()
+                // even though we wrap the exception in `runCatching` it still throws at the end!
+                repo.methodThatWaitsForThrowingDeferredWithRunCatching()
+            }
         }
     }
 
@@ -75,7 +77,7 @@ class RepositoryWithDeferredTest {
 
     @Test
     fun `methodThatWaitsForThrowingDeferredWithRunCatching should NOT fail when supervisorScope used`() {
-        runTest(testDispatcher) {
+        runTest(UnconfinedTestDispatcher()) {
             supervisorScope supervisorScope@{
                 val repo = Repository(this@supervisorScope)
 
@@ -101,18 +103,24 @@ class RepositoryWithDeferredTest {
     class Repository(private val coroutineScope: CoroutineScope) {
 
         private val throwingDeferred: Deferred<String> by lazy {
-            coroutineScope.async { throw IllegalStateException("throwingDeferred") }
+            coroutineScope.async {
+                throw IllegalStateException("throwingDeferred")
+            }
         }
 
         fun methodThatWaitsForThrowingDeferred() {
-            coroutineScope.launch { throwingDeferred.await() }
+            coroutineScope.launch {
+                throwingDeferred.await()
+            }
+
         }
 
         fun methodThatWaitsForThrowingDeferredWithRunCatching() {
             coroutineScope.launch {
-                kotlin.runCatching { throwingDeferred.await() }
+                kotlin.runCatching {
+                    throwingDeferred.await()
+                }
             }
         }
     }
 }
-
